@@ -1,0 +1,13 @@
+.Navbar{
+  padding-top: 10px;
+
+ border-bottom: 1px solid gray;
+  height:30px;
+}
+.Product{
+  margin-top: 20px;
+}
+.card{
+  
+  border: 1px solid gray;
+}
