@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { MdPlayCircleOutline } from "react-icons/md";
+import { FaRegCirclePause } from "react-icons/fa6";
 import NewCreateProduct from '../../catalog/products/NewCreateProduct.js'
 import config from '../../../config.js';
 import { HiPlus, HiMinus } from "react-icons/hi";
@@ -95,6 +97,7 @@ export default function Createproduct() {
     const [activeButton, setActiveButton] = useState(1);
 
 
+
     // form fields error states
     const [errProductname, seterrProductname] = useState(false);
     const [errProductCountry, seterrProductCountry] = useState(false);
@@ -108,26 +111,33 @@ export default function Createproduct() {
     let BaseCurrency = AdminBaseCurrency()
     /* product image desktop */
 
+    const videoRef = useRef()
+
     const [DesktopImages, setDesktopImages] = useState([
         {
             ImageUrl: '',
+            type: '',
             ImageFile: '',
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
         }
     ]);
 
@@ -136,25 +146,35 @@ export default function Createproduct() {
     const [MobileImages, setMobileImages] = useState([
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
+        
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
+         
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
+          
         },
         {
             ImageUrl: '',
-            ImageFile: ''
+            type: '',
+            ImageFile: '',
+           
         }
     ]);
+
 
     const [VariationFormValues, setVariationFormValues] = useState([])
 
@@ -413,7 +433,7 @@ export default function Createproduct() {
     function getProductcountry(e) {
         setProductcountry(e.target.value)
         const selectedOption = e.target.options[e.target.selectedIndex];
-        const countrySlug = selectedOption.getAttribute('Country_Slug');
+        const countrySlug = selectedOption.getAttribute('country_slug');
         setCountrySlug(countrySlug)
         seterrProductCountry(false)
     }
@@ -492,6 +512,7 @@ export default function Createproduct() {
         let newFormValues = [...VariationFormValues];
         newFormValues[index].variation_image = e.target.files[0];
         newFormValues[index].previewimageurl = URL.createObjectURL(e.target.files[0]);
+
         newFormValues[index].newimage = true;
         setVariationFormValues(newFormValues);
     }
@@ -766,17 +787,101 @@ export default function Createproduct() {
         }
     }
 
+
+    // const handlePlayClick = () => {
+    //     if (videoRef.current) {
+    //         videoRef.current.play();
+
+    // };
     const handleFileChange = (index) => (e) => {
         const file = e.target.files[0];
-        handleFile(index, file);
+        if (file) {
+            handleFile(index, file);
+        }
     };
 
     const handleFile = (index, file) => {
-        const newImages = [...DesktopImages]
-        newImages[index]['ImageUrl'] = URL.createObjectURL(file);
-        newImages[index]['ImageFile'] = file;
+        console.log(index, file)
+        const newImages = [...DesktopImages];
+        newImages[index] = {
+            ...newImages[index],
+            ImageFile: file,
+            ImageUrl: URL.createObjectURL(file),
+            type: file.type.startsWith('image') ? 'image' : 'video',
+        };
+
+        if (file.type.startsWith('image')) {
+            newImages[index].ImageUrl = URL.createObjectURL(file);
+        } else if (file.type.startsWith('video')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                newImages[index].ImageUrl = e.target.result;
+                setDesktopImages(newImages);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        console.log('newImages', newImages)
+
         setDesktopImages(newImages);
     };
+
+
+    // const handleFileChange = (index) => (e) => {
+    //     const file = e.target.files[0].type;
+
+    //     handleFile(index, file);
+    // };
+
+
+    // const handleFile = (index, file) => {
+    //     const newImages = [...DesktopImages]
+    //     newImages[index]['ImageUrl'] = URL.createObjectURL(file);
+    //     newImages[index]['ImageFile'] = file;
+    //     setDesktopImages(newImages);
+    // };
+    // const handleVideoClick = () => {
+    //     if (videoRef.current) {
+    //         if (videoRef.current.paused) {
+    //             videoRef.current.play();
+
+
+    //         } else {
+    //             videoRef.current.pause();
+
+    //         }
+    //     }
+    // };
+
+
+    
+ 
+    const [a, setA] = useState(true);
+    const[b,setB]=useState(false)
+   
+    const videoRefs = useRef(DesktopImages.map(() => React.createRef()));
+
+    const handleVideoClickPlay = (index) => {
+        const videoRef = videoRefs.current[index].current;
+        if (videoRef) {
+            videoRef.play();
+            setA(false); 
+            setB(true); 
+        }
+    };
+    const handleVideoClickPause = (index) => {
+        const videoRef = videoRefs.current[index].current;
+        if (videoRef) {
+            videoRef.pause();
+            setA(true); 
+            setB(false); 
+        }
+    };
+  
+
+
+
+
 
     const handleDragStart = (index) => (e) => {
         e.dataTransfer.setData("index", index);
@@ -796,15 +901,41 @@ export default function Createproduct() {
 
     const handleFileChangeMobile = (index) => (e) => {
         const file = e.target.files[0];
-        handleFileMobile(index, file);
-    };
+        if (file) {
+            handleFileMobile(index, file);
+        }
 
+    };
     const handleFileMobile = (index, file) => {
-        const newImages = [...MobileImages]
-        newImages[index]['ImageUrl'] = URL.createObjectURL(file);
-        newImages[index]['ImageFile'] = file;
+        const newImages = [...MobileImages];
+        newImages[index] = {
+            ...newImages[index],
+            ImageFile: file,
+            ImageUrl: URL.createObjectURL(file),
+            type: file.type.startsWith('image') ? 'image' : 'video',
+        };
+
+        if (file.type.startsWith('image')) {
+            newImages[index].ImageUrl = URL.createObjectURL(file);
+        } else if (file.type.startsWith('video')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                newImages[index].ImageUrl = e.target.result;
+                setMobileImages(newImages);
+            };
+            reader.readAsDataURL(file);
+        }
+
         setMobileImages(newImages);
     };
+
+
+    // const handleFileMobile = (index, file) => {
+    //     const newImages = [...MobileImages]
+    //     newImages[index]['ImageUrl'] = URL.createObjectURL(file);
+    //     newImages[index]['ImageFile'] = file;
+    //     setMobileImages(newImages);
+    // };
 
     const handleDragStartMobile = (index) => (e) => {
         e.dataTransfer.setData("index", index);
@@ -1267,12 +1398,11 @@ export default function Createproduct() {
                                                                 <div className="col-md-2 p-0">
                                                                     <label className="form_label">Country*</label>
                                                                     <select className={'form-control' + (errProductCountry ? ' inputerrors' : '')} name="Addonstatus" onChange={(e) => getProductcountry(e)} value={Productcountry} >
-                                                                        <option value="" Country_Slug=''>-- Select --</option>
+                                                                        <option value="" country_slug=''>-- Select --</option>
                                                                         {countries.map((item, index) => {
                                                                             return (
-                                                                                <>
-                                                                                    <option Country_Slug={item.CountrySlug} value={item.CountryId}>{item.CountryName}</option>
-                                                                                </>
+                                                                                <option country_slug={item.CountrySlug} value={item.CountryId} key={index}>{item.CountryName}</option>
+
                                                                             )
                                                                         })}
                                                                     </select>
@@ -1293,9 +1423,7 @@ export default function Createproduct() {
                                                                         <option value="">-- Select --</option>
                                                                         {AllVendors.map((item, index) => {
                                                                             return (
-                                                                                <>
-                                                                                    <option value={item.VendorId}>{item.StoreName}</option>
-                                                                                </>
+                                                                                <option value={item.VendorId} key={index} >{item.StoreName}</option>
                                                                             )
                                                                         })}
                                                                     </select>
@@ -1384,9 +1512,8 @@ export default function Createproduct() {
                                                                                             <option value=''>--Select--</option>
                                                                                             {AllCalenderTag.map((item, ind) => {
                                                                                                 return (
-                                                                                                    <>
-                                                                                                        <option value={item.CalenderTagId}>{item.CalenderTagName}</option>
-                                                                                                    </>
+                                                                                                    <option value={item.CalenderTagId} key={ind}>{item.CalenderTagName}</option>
+
                                                                                                 )
                                                                                             })}
                                                                                         </select>
@@ -1655,22 +1782,20 @@ export default function Createproduct() {
                                                     <div className="generalinfowrapper-body row">
                                                         {AllDeliveryLocations && AllDeliveryLocations.map((item, ind) => {
                                                             return (
-                                                                <>
-                                                                    <div className='proaddonswrap col-md-4 ' key={ind} >
-                                                                        <div className='proaddonckbx'>
-                                                                            <div>
-                                                                                <input type="checkbox"
-                                                                                    className="mt-1 mb-1 ps-31 checkbox-input tick-icon"
-                                                                                    value={item.DeliveryLocationGroupId}
-                                                                                    onChange={DeliveryLocationSelect}
-                                                                                    checked={DeleveryLocationGroup.includes(item.DeliveryLocationGroupId.toString())} />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className='proaddonnames'>
-                                                                            <span>{item.DeliveryLocationGroupname}</span>
+                                                                <div className='proaddonswrap col-md-4 ' key={ind} >
+                                                                    <div className='proaddonckbx'>
+                                                                        <div>
+                                                                            <input type="checkbox"
+                                                                                className="mt-1 mb-1 ps-31 checkbox-input tick-icon"
+                                                                                value={item.DeliveryLocationGroupId}
+                                                                                onChange={DeliveryLocationSelect}
+                                                                                checked={DeleveryLocationGroup.includes(item.DeliveryLocationGroupId.toString())} />
                                                                         </div>
                                                                     </div>
-                                                                </>
+                                                                    <div className='proaddonnames'>
+                                                                        <span>{item.DeliveryLocationGroupname}</span>
+                                                                    </div>
+                                                                </div>
                                                             )
                                                         })}
                                                     </div>
@@ -1696,133 +1821,283 @@ export default function Createproduct() {
                                                                         <div className='Imagecontainermain'>
                                                                             {DesktopImages.map((item, index) => {
                                                                                 return (
-                                                                                    <>
-                                                                                        <div
-                                                                                            key={index}
-                                                                                            className="image-item"
-                                                                                            onDragStart={handleDragStart(index)}
+                                                                                    <div
+                                                                                        key={index}
+                                                                                        className="image-item"
+                                                                                        onDragStart={handleDragStart(index)}
 
-                                                                                            onDrop={(e) => handleDrop(e, index)}
-                                                                                            onDragOver={(e) => e.preventDefault()}
-                                                                                            draggable
-                                                                                        >
-                                                                                            {index == 1 ?
-                                                                                                <>
-                                                                                                 
-                                                                                                    <div className='secdiv'>
-                                                                                                        <label htmlFor="fileInput2" className='secImage'>
+                                                                                        onDrop={(e) => handleDrop(e, index)}
+                                                                                        onDragOver={(e) => e.preventDefault()}
+                                                                                        draggable
+                                                                                    >
+                                                                                        {index == 1 ?
+
+                                                                                            <>
+
+
+                                                                                                <div className='secdiv'>
+                                                                                                    <label htmlFor="fileInput2" className='secImage'>
+
+                                                                                                        {(item.type === 'video') ?
+
+                                                                                                            <video
+                                                                                                                ref={videoRefs.current[index]}
+
+                                                                                                                controls={false}
+                                                                                                                className='draggableVideo'
+
+                                                                                                                src={item.ImageUrl}
+                                                                                                                style={{ width: "100px", height: "100px" }}
+                                                                                                            />
+                                                                                                            :
                                                                                                             <img
                                                                                                                 src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
                                                                                                                 style={{ cursor: 'pointer' }}
                                                                                                             />
-                                                                                                         
+
+                                                                                                        }
+
+
+                                                                                                        <input
+                                                                                                            type="file"
+                                                                                                            id="fileInput2"
+                                                                                                            accept="image/* video/*'"
+                                                                                                            style={{ display: 'none' }}
+                                                                                                            onChange={handleFileChange(index)}
+                                                                                                        />
+
+
+                                                                                                    </label>
+                                                                                                    { a && item && item.type === 'video' && (
+                                                                                                        <MdPlayCircleOutline
+                                                                                                            style={{
+                                                                                                            
+                                                                                                                fontSize: "32px",
+                                                                                                                color: "white",
+                                                                                                                borderRadius: "50%",
+                                                                                                                position: "absolute",
+                                                                                                                bottom: "40%",
+                                                                                                                left: "35px"
+                                                                                                            }}
+                                                                                                           
+                                                                                                            onClick={() => handleVideoClickPlay(index)}
+                                                                                                          
+                                                                                                        />
+                                                                                                       
+                                                                                                    )}
+                                                                                                    { b && item && item.type === 'video' && (
+                                                                                                    <FaRegCirclePause 
+                                                                                                        style={{
+                                                                                                          
+                                                                                                            fontSize: "32px",
+                                                                                                            color: "white",
+                                                                                                            borderRadius: "50%",
+                                                                                                            position: "absolute",
+                                                                                                            bottom: "40%",
+                                                                                                            left: "35px"
+                                                                                                        }}
+                                                                                                        onClick={() => handleVideoClickPause(index)}
+                                                                                                    />
+                                                                                                    )}
+                                                                                                        </div>
+                                                                                            </>
+                                                                                                : index == 2 ?
+                                                                                                <>
+                                                                                                    <div className='thirddiv'>
+                                                                                                        <label htmlFor="fileInput3" className='thirdImage'>
+                                                                                                            {(item.type === 'video') ?
+
+                                                                                                                <video
+                                                                                                                    ref={videoRefs.current[index]}
+
+                                                                                                                    controls={false}
+                                                                                                                    className='draggableVideo'
+
+                                                                                                                    src={item.ImageUrl}
+                                                                                                                    style={{ width: "100px", height: "100px" }}
+                                                                                                                />
+                                                                                                                :
+                                                                                                                <img
+                                                                                                                    src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                    style={{ cursor: 'pointer' }}
+                                                                                                                />
+
+                                                                                                            }
+
+
                                                                                                             <input
                                                                                                                 type="file"
-                                                                                                                id="fileInput2"
-                                                                                                                accept="image/* video/*'"
+                                                                                                                id="fileInput3"
+                                                                                                                accept="image/*video/*"
+                                                                                                                style={{ display: 'none' }}
+                                                                                                                onChange={handleFileChange(index)}
+                                                                                                            />
+                                                                                                        </label>
+                                                                                                        { a && item && item.type === 'video'&& (
+                                                                                                        <MdPlayCircleOutline
+                                                                                                            style={{
+                                                                                                            
+                                                                                                                fontSize: "32px",
+                                                                                                                color: "white",
+                                                                                                                borderRadius: "50%",
+                                                                                                                position: "absolute",
+                                                                                                                bottom: "40%",
+                                                                                                                left: "35px"
+                                                                                                            }}
+                                                                                                           
+                                                                                                            onClick={() => handleVideoClickPlay(index)}
+                                                                                                          
+                                                                                                        />
+                                                                                                       
+                                                                                                    )}
+                                                                                                    { b && item && item.type === 'video'  && (
+                                                                                                    <FaRegCirclePause 
+                                                                                                        style={{
+                                                                                                          
+                                                                                                            fontSize: "32px",
+                                                                                                            color: "white",
+                                                                                                            borderRadius: "50%",
+                                                                                                            position: "absolute",
+                                                                                                            bottom: "40%",
+                                                                                                            left: "35px"
+                                                                                                        }}
+                                                                                                        onClick={() => handleVideoClickPause(index)}
+                                                                                                    />
+                                                                                                    )}
+                                                         
+                                                                                                    </div>
+                                                                                                </>
+                                                                                                : index == 3 ?
+                                                                                                <>
+                                                                                                    <div className='fourthdiv'>
+                                                                                                        <label htmlFor="fileInput4" className='forthImage'>
+                                                                                                            {(item.type === 'video') ?
+
+                                                                                                                <video
+                                                                                                                    controls={true}
+                                                                                                                    className='draggableVideo'
+
+                                                                                                                    src={item.ImageUrl}
+                                                                                                                    style={{ width: "100px", height: "100px" }}
+                                                                                                                />
+                                                                                                                :
+                                                                                                                <img
+                                                                                                                    src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                    style={{ cursor: 'pointer' }}
+                                                                                                                />
+                                                                                                            }
+                                                                                                            <input
+                                                                                                                type="file"
+                                                                                                                id="fileInput4"
+                                                                                                                accept="image/*video/*"
                                                                                                                 style={{ display: 'none' }}
                                                                                                                 onChange={handleFileChange(index)}
                                                                                                             />
                                                                                                         </label>
                                                                                                     </div>
                                                                                                 </>
-                                                                                                : index == 2 ?
-                                                                                                    <>
-                                                                                                        <div className='thirddiv'>
-                                                                                                            <label htmlFor="fileInput3" className='thirdImage'>
+                                                                                                : index == 4 ?
+                                                                                                <>
+                                                                                                    <div className='fifthdiv'>
+                                                                                                        <label htmlFor="fileInput5" className='fifthImage'>
+                                                                                                            {(item.type === 'video') ?
+
+                                                                                                                <video
+
+
+                                                                                                                    controls={true}
+                                                                                                                    className='draggableVideo'
+
+                                                                                                                    src={item.ImageUrl}
+                                                                                                                    style={{ width: "100px", height: "100px" }}
+                                                                                                                />
+                                                                                                                :
                                                                                                                 <img
                                                                                                                     src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
-
                                                                                                                     style={{ cursor: 'pointer' }}
                                                                                                                 />
+                                                                                                            }
+                                                                                                            <input
+                                                                                                                type="file"
+                                                                                                                id="fileInput5"
+                                                                                                                accept="image/*video/*"
+                                                                                                                style={{ display: 'none' }}
+                                                                                                                onChange={handleFileChange(index)}
+                                                                                                            />
+                                                                                                        </label>
+                                                                                                    </div>
+                                                                                                </>
+                                                                                                :
+                                                                                                <>
+                                                                                                    <div className='imagecontainerright'>
+                                                                                                        <div className='firstdiv'>
+                                                                                                            <label htmlFor="fileInput" className='Mainimage'>
+                                                                                                                {(item.type === 'video') ?
+
+                                                                                                                    <video
+                                                                                                                        controls={true}
+                                                                                                                        className='draggableVideo'
+
+                                                                                                                        src={item.ImageUrl}
+
+                                                                                                                    />
+                                                                                                                    :
+                                                                                                                    <img
+                                                                                                                        src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                        className={'' + (!item.ImageUrl && index === 0 ? ' inputerrors' : '')}
+                                                                                                                        style={{ cursor: 'pointer' }}
+                                                                                                                    />
+                                                                                                                }
+                                                                                                                {/* <img
+                                                                                                                            src={item.ImageUrl ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                            className={'' + (!item.ImageUrl && index === 0 ? ' inputerrors' : '')}
+                                                                                                                            style={{ cursor: 'pointer' }}
+                                                                                                                        /> */}
+
+
+
                                                                                                                 <input
                                                                                                                     type="file"
-                                                                                                                    id="fileInput3"
+                                                                                                                    id="fileInput"
                                                                                                                     accept="image/*"
                                                                                                                     style={{ display: 'none' }}
                                                                                                                     onChange={handleFileChange(index)}
                                                                                                                 />
+                                                                                                                {item.type === 'video' && (
+                                                                                                                    <MdPlayCircleOutline
+                                                                                                                        style={{
+                                                                                                                            fontSize: "32px",
+                                                                                                                            color: "white",
+                                                                                                                            borderRadius: "50%",
+                                                                                                                            position: "absolute",
+                                                                                                                            bottom: "40%",
+                                                                                                                            left: "35px"
+                                                                                                                        }}
+                                                                                                                        onClick={(e) => {
+
+
+
+                                                                                                                        }}
+                                                                                                                    />
+                                                                                                                )}
+
                                                                                                             </label>
                                                                                                         </div>
-                                                                                                    </>
-                                                                                                    : index == 3 ?
-                                                                                                        <>
-                                                                                                            <div className='fourthdiv'>
-                                                                                                                <label htmlFor="fileInput4" className='forthImage'>
-                                                                                                                    <img
-                                                                                                                        src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
-
-                                                                                                                        style={{ cursor: 'pointer' }}
-                                                                                                                    />
-                                                                                                                    <input
-                                                                                                                        type="file"
-                                                                                                                        id="fileInput4"
-                                                                                                                        accept="image/*"
-                                                                                                                        style={{ display: 'none' }}
-                                                                                                                        onChange={handleFileChange(index)}
-                                                                                                                    />
-                                                                                                                </label>
-                                                                                                            </div>
-                                                                                                        </>
-                                                                                                        : index == 4 ?
-                                                                                                            <>
-                                                                                                                <div className='fifthdiv'>
-                                                                                                                    <label htmlFor="fileInput5" className='fifthImage'>
-                                                                                                                        <img
-                                                                                                                            src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
-
-                                                                                                                            style={{ cursor: 'pointer' }}
-                                                                                                                        />
-                                                                                                                        <input
-                                                                                                                            type="file"
-                                                                                                                            id="fileInput5"
-                                                                                                                            accept="image/*"
-                                                                                                                            style={{ display: 'none' }}
-                                                                                                                            onChange={handleFileChange(index)}
-                                                                                                                        />
-                                                                                                                    </label>
-                                                                                                                </div>
-                                                                                                            </>
-                                                                                                            :
-                                                                                                            <>
-                                                                                                                <div className='imagecontainerright'>
-                                                                                                                    <div className='firstdiv'>
-                                                                                                                        <label htmlFor="fileInput" className='Mainimage'>
-
-                                                                                                                            <img
-                                                                                                                                src={item.ImageUrl ? item.ImageUrl : config.placeholderimageurl}
-                                                                                                                                className={'' + (!item.ImageUrl && index === 0 ? ' inputerrors' : '')}
-                                                                                                                                style={{ cursor: 'pointer' }}
-                                                                                                                            />
-
-
-
-                                                                                                                            <input
-                                                                                                                                type="file"
-                                                                                                                                id="fileInput"
-                                                                                                                                accept="image/*"
-                                                                                                                                style={{ display: 'none' }}
-                                                                                                                                onChange={handleFileChange(index)}
-                                                                                                                            />
-                                                                                                                        </label>
-                                                                                                                    </div>
-                                                                                                                </div>
-                                                                                                            </>
-                                                                                            }
-                                                                                        </div>
-                                                                                    </>
-                                                                                )
+                                                                                                    </div>
+                                                                                                </>
+                                                                                        }
+                                                                                            </div>
+                                                                                        )
                                                                             })}
-                                                                        </div>
+                                                                                    </div>
 
                                                                     </div>
 
-                                                                    <div className='inner_category_image'>
-                                                                        <label className='mb-2 fw-bold'> For Mobile (390 X 390 |  File type: webp)</label>
-                                                                        <div className='Imagecontainermain'>
-                                                                            {MobileImages.map((item, index) => {
-                                                                                return (
-                                                                                    <>
+                                                                        <div className='inner_category_image'>
+                                                                            <label className='mb-2 fw-bold'> For Mobile (390 X 390 |  File type: webp)</label>
+                                                                            <div className='Imagecontainermain'>
+                                                                                {MobileImages.map((item, index) => {
+                                                                                    return (
                                                                                         <div
                                                                                             key={index}
                                                                                             className="image-item"
@@ -1836,14 +2111,25 @@ export default function Createproduct() {
                                                                                                 <>
                                                                                                     <div className='secdiv imagecontainerleft'>
                                                                                                         <label htmlFor="fileInput2mob" className='secImage'>
-                                                                                                            <img
-                                                                                                                src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
-                                                                                                                style={{ cursor: 'pointer' }}
-                                                                                                            />
+                                                                                                            {(item.type === 'video') ?
+
+                                                                                                                <video
+                                                                                                                    controls={true}
+                                                                                                                    className='draggableVideo'
+
+                                                                                                                    src={item.ImageUrl}
+                                                                                                                    style={{ width: "100px", height: "100px" }}
+                                                                                                                />
+                                                                                                                :
+                                                                                                                <img
+                                                                                                                    src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                    style={{ cursor: 'pointer' }}
+                                                                                                                />
+                                                                                                            }
                                                                                                             <input
                                                                                                                 type="file"
                                                                                                                 id="fileInput2mob"
-                                                                                                                accept="image/*"
+                                                                                                                accept="image/*video/*"
                                                                                                                 style={{ display: 'none' }}
                                                                                                                 onChange={handleFileChangeMobile(index)}
                                                                                                             />
@@ -1855,10 +2141,21 @@ export default function Createproduct() {
                                                                                                     <>
                                                                                                         <div className='thirddiv imagecontainerleft'>
                                                                                                             <label htmlFor="fileInput3mob" className='thirdImage'>
-                                                                                                                <img
-                                                                                                                    src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
-                                                                                                                    style={{ cursor: 'pointer' }}
-                                                                                                                />
+                                                                                                                {(item.type === 'video') ?
+
+                                                                                                                    <video
+                                                                                                                        controls={true}
+                                                                                                                        className='draggableVideo'
+
+                                                                                                                        src={item.ImageUrl}
+                                                                                                                        style={{ width: "100px", height: "100px" }}
+                                                                                                                    />
+                                                                                                                    :
+                                                                                                                    <img
+                                                                                                                        src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                        style={{ cursor: 'pointer' }}
+                                                                                                                    />
+                                                                                                                }
                                                                                                                 <input
                                                                                                                     type="file"
                                                                                                                     id="fileInput3mob"
@@ -1873,10 +2170,21 @@ export default function Createproduct() {
                                                                                                         <>
                                                                                                             <div className='fourthdiv imagecontainerleft'>
                                                                                                                 <label htmlFor="fileInput4mob" className='forthImage'>
-                                                                                                                    <img
-                                                                                                                        src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
-                                                                                                                        style={{ cursor: 'pointer' }}
-                                                                                                                    />
+                                                                                                                    {(item.type === 'video') ?
+
+                                                                                                                        <video
+                                                                                                                            controls={true}
+                                                                                                                            className='draggableVideo'
+
+                                                                                                                            src={item.ImageUrl}
+                                                                                                                            style={{ width: "100px", height: "100px" }}
+                                                                                                                        />
+                                                                                                                        :
+                                                                                                                        <img
+                                                                                                                            src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                            style={{ cursor: 'pointer' }}
+                                                                                                                        />
+                                                                                                                    }
                                                                                                                     <input
                                                                                                                         type="file"
                                                                                                                         id="fileInput4mob"
@@ -1891,11 +2199,21 @@ export default function Createproduct() {
                                                                                                             <>
                                                                                                                 <div className='fifthdiv imagecontainerleft'>
                                                                                                                     <label htmlFor="fileInput5mob" className='fifthImage'>
-                                                                                                                        <img
-                                                                                                                            src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                        {(item.type === 'video') ?
 
-                                                                                                                            style={{ cursor: 'pointer' }}
-                                                                                                                        />
+                                                                                                                            <video
+                                                                                                                                controls={true}
+                                                                                                                                className='draggableVideo'
+
+                                                                                                                                src={item.ImageUrl}
+                                                                                                                                style={{ width: "100px", height: "100px" }}
+                                                                                                                            />
+                                                                                                                            :
+                                                                                                                            <img
+                                                                                                                                src={(item.ImageUrl) ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                                style={{ cursor: 'pointer' }}
+                                                                                                                            />
+                                                                                                                        }
                                                                                                                         <input
                                                                                                                             type="file"
                                                                                                                             id="fileInput5mob"
@@ -1911,11 +2229,23 @@ export default function Createproduct() {
                                                                                                                 <div className='imagecontainerright'>
                                                                                                                     <div className='firstdiv'>
                                                                                                                         <label htmlFor="fileInputmob" className='Mainimage'>
-                                                                                                                            <img
-                                                                                                                                src={item.ImageUrl ? item.ImageUrl : config.placeholderimageurl}
-                                                                                                                                className={'' + (!item.ImageUrl && index === 0 ? ' inputerrors' : '')}
-                                                                                                                                style={{ cursor: 'pointer' }}
-                                                                                                                            />
+                                                                                                                            {(item.type === 'video') ?
+
+                                                                                                                                <video
+                                                                                                                                    controls={true}
+                                                                                                                                    className='draggableVideo'
+
+                                                                                                                                    src={item.ImageUrl}
+
+                                                                                                                                />
+                                                                                                                                :
+                                                                                                                                <img
+                                                                                                                                    src={item.ImageUrl ? item.ImageUrl : config.placeholderimageurl}
+                                                                                                                                    className={'' + (!item.ImageUrl && index === 0 ? ' inputerrors' : '')}
+                                                                                                                                    style={{ cursor: 'pointer' }}
+                                                                                                                                />
+                                                                                                                            }
+
                                                                                                                             <input
                                                                                                                                 type="file"
                                                                                                                                 id="fileInputmob"
@@ -1929,300 +2259,299 @@ export default function Createproduct() {
                                                                                                             </>
                                                                                             }
                                                                                         </div>
-                                                                                    </>
-                                                                                )
-                                                                            })}
+                                                                                    )
+                                                                                })}
 
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
 
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
+
                                                     </div>
+                                                </div>}
+                                                {/* Products Images ends */}
 
-                                                </div>
-                                            </div>}
-                                        {/* Products Images ends */}
-
-                                        {/* attributes starts */}
-                                        {activeButton === 7 &&
-                                            <div className="product-form mt-4" style={{ height: "650px" }}>
-                                                <div className='generalinfowrapper'>
-                                                    <div className="generalinfowrapper-body row">
-                                                        <div className='wrppercrtrle pb-3'>
-                                                            {AllAttributes.map((item, ind) => {
-                                                                return (
-                                                                    <>
-                                                                        <div>
-                                                                            <table className='tableAttibute' style={{ width: "479px" }}>
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th className="text-center w1"></th>
-                                                                                        <th className="text-center w2"></th>
-                                                                                        <th className="text-center w3"></th>
-                                                                                        <th className="text-center w4">
-                                                                                        </th>
-                                                                                        <th colspan="2" className="text-center w5" style={{ width: "145px" }}> {(ind < 1) ? 'Vendor Price' : ''}</th>
-                                                                                        <th className="text-center w6"></th>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <th className="text-center w1"></th>
-                                                                                        <th className="text-center w2"></th>
-                                                                                        <th className="text-center w3"></th>
-                                                                                        <th className="text-center w4"> {(ind < 1) ? 'Price' : ''}
-                                                                                        </th>
-                                                                                        <th className="text-center w5"> {(ind < 1) ? BaseCurrency.adminLabel + ' Price' : ''}
-                                                                                        </th>
-                                                                                        <th className="text-center w5"> {(ind < 1) ? 'Base Price' : ''} </th>
-                                                                                        <th className="text-center w6"> {(ind < 1) ? 'Default' : ''} </th>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <th className="text-center w1" onClick={() => toggleSubMenu(item[0].parentmenuname)}>{subMenuVisibility[item[0].parentmenuname] ? <HiMinus /> : <HiPlus />}</th>
-                                                                                        <th className="text-center w2">{item[0].parentmenuname}</th>
-                                                                                        <th className="text-center w3"></th>
-                                                                                        <th className="text-center w4"></th>
-                                                                                        <th className="text-center w5"></th>
-                                                                                        <th className="text-center w5"></th>
-                                                                                        <th className="text-center w6"></th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    {subMenuVisibility[item[0].parentmenuname] && item[1].submenus && item[1].submenus.map((data, index) => {
-                                                                                        return (
-                                                                                            <>
-                                                                                                <tr className=''>
-                                                                                                    <td className="tdstyle w1"></td>
-                                                                                                    <td className="tdblank w2"></td>
-                                                                                                    <td className="tdSecond text-left ps-1 w3">{data.AttributeItemName}</td>
-                                                                                                    <td className="tdInput w4">
-                                                                                                        <input type="text" style={{ width: "58px" }}
-                                                                                                            value={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.attributePrice || ''}
-                                                                                                            onChange={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'attributePrice')}
-                                                                                                            className={`tdVendorPrice form-control
+                                                {/* attributes starts */}
+                                                {activeButton === 7 &&
+                                                    <div className="product-form mt-4" style={{ height: "650px" }}>
+                                                        <div className='generalinfowrapper'>
+                                                            <div className="generalinfowrapper-body row">
+                                                                <div className='wrppercrtrle pb-3'>
+                                                                    {AllAttributes.map((item, ind) => {
+                                                                        return (
+                                                                            <>
+                                                                                <div>
+                                                                                    <table className='tableAttibute' style={{ width: "479px" }}>
+                                                                                        <thead>
+                                                                                            <tr>
+                                                                                                <th className="text-center w1"></th>
+                                                                                                <th className="text-center w2"></th>
+                                                                                                <th className="text-center w3"></th>
+                                                                                                <th className="text-center w4">
+                                                                                                </th>
+                                                                                                <th colspan="2" className="text-center w5" style={{ width: "145px" }}> {(ind < 1) ? 'Vendor Price' : ''}</th>
+                                                                                                <th className="text-center w6"></th>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <th className="text-center w1"></th>
+                                                                                                <th className="text-center w2"></th>
+                                                                                                <th className="text-center w3"></th>
+                                                                                                <th className="text-center w4"> {(ind < 1) ? 'Price' : ''}
+                                                                                                </th>
+                                                                                                <th className="text-center w5"> {(ind < 1) ? BaseCurrency.adminLabel + ' Price' : ''}
+                                                                                                </th>
+                                                                                                <th className="text-center w5"> {(ind < 1) ? 'Base Price' : ''} </th>
+                                                                                                <th className="text-center w6"> {(ind < 1) ? 'Default' : ''} </th>
+                                                                                            </tr>
+                                                                                            <tr>
+                                                                                                <th className="text-center w1" onClick={() => toggleSubMenu(item[0].parentmenuname)}>{subMenuVisibility[item[0].parentmenuname] ? <HiMinus /> : <HiPlus />}</th>
+                                                                                                <th className="text-center w2">{item[0].parentmenuname}</th>
+                                                                                                <th className="text-center w3"></th>
+                                                                                                <th className="text-center w4"></th>
+                                                                                                <th className="text-center w5"></th>
+                                                                                                <th className="text-center w5"></th>
+                                                                                                <th className="text-center w6"></th>
+                                                                                            </tr>
+                                                                                        </thead>
+                                                                                        <tbody>
+                                                                                            {subMenuVisibility[item[0].parentmenuname] && item[1].submenus && item[1].submenus.map((data, index) => {
+                                                                                                return (
+                                                                                                    <>
+                                                                                                        <tr className=''>
+                                                                                                            <td className="tdstyle w1"></td>
+                                                                                                            <td className="tdblank w2"></td>
+                                                                                                            <td className="tdSecond text-left ps-1 w3">{data.AttributeItemName}</td>
+                                                                                                            <td className="tdInput w4">
+                                                                                                                <input type="text" style={{ width: "58px" }}
+                                                                                                                    value={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.attributePrice || ''}
+                                                                                                                    onChange={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'attributePrice')}
+                                                                                                                    className={`tdVendorPrice form-control
                                                                                                             text-end ${SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId && attr.hasOwnProperty('attributePriceIsValid') && attr.attributePriceIsValid) ? 'inputerrors' : ''}`} placeholder='0.00'></input>
-                                                                                                    </td>
-                                                                                                    <td className="tdblank w5">
-                                                                                                        <input type="text"
-                                                                                                            value={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.VenderINRPrice || ''}
-                                                                                                            onChange={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'VenderINRPrice')}
-                                                                                                            className={`tdVendorPrice form-control text-end ${SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId && attr.hasOwnProperty('VenderINRPriceIsValid') && attr.VenderINRPriceIsValid) ? 'inputerrors' : ''}`} placeholder='0.00'></input>
-                                                                                                    </td>
-                                                                                                    <td className="tdblank w5">
-                                                                                                        <input type="text"
-                                                                                                            value={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.VenderBasePrice || ''}
-                                                                                                            onChange={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'VenderBasePrice')}
-                                                                                                            className={`tdVendorPrice form-control text-end ${SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId && attr.hasOwnProperty('VenderBasePriceIsValid') && attr.VenderBasePriceIsValid) ? 'inputerrors' : ''}`} placeholder='0.00'></input>
-                                                                                                    </td>
-                                                                                                    <td className="tdblank w6">
-                                                                                                        <input type="radio" name={item[0].parentmenuname} checked={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.IsDefault === 1} onClick={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'IsDefault')} />
-                                                                                                    </td>
-                                                                                                </tr>
-                                                                                            </>
-                                                                                        )
-                                                                                    })}
-                                                                                </tbody>
-                                                                            </table>
+                                                                                                            </td>
+                                                                                                            <td className="tdblank w5">
+                                                                                                                <input type="text"
+                                                                                                                    value={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.VenderINRPrice || ''}
+                                                                                                                    onChange={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'VenderINRPrice')}
+                                                                                                                    className={`tdVendorPrice form-control text-end ${SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId && attr.hasOwnProperty('VenderINRPriceIsValid') && attr.VenderINRPriceIsValid) ? 'inputerrors' : ''}`} placeholder='0.00'></input>
+                                                                                                            </td>
+                                                                                                            <td className="tdblank w5">
+                                                                                                                <input type="text"
+                                                                                                                    value={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.VenderBasePrice || ''}
+                                                                                                                    onChange={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'VenderBasePrice')}
+                                                                                                                    className={`tdVendorPrice form-control text-end ${SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId && attr.hasOwnProperty('VenderBasePriceIsValid') && attr.VenderBasePriceIsValid) ? 'inputerrors' : ''}`} placeholder='0.00'></input>
+                                                                                                            </td>
+                                                                                                            <td className="tdblank w6">
+                                                                                                                <input type="radio" name={item[0].parentmenuname} checked={SlectedProductAttribute.find(attr => attr.AttributeItemId === data.AttributeItemId)?.IsDefault === 1} onClick={(e) => setAttribute(e, data.AttributeItemId, data.AttributeNo, 'IsDefault')} />
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </>
+                                                                                                )
+                                                                                            })}
+                                                                                        </tbody>
+                                                                                    </table>
+                                                                                </div>
+                                                                            </>
+                                                                        )
+                                                                    })}
+                                                                </div >
+                                                            </div>
+                                                        </div>
+                                                    </div>}
+                                                {/* attributes ends */}
+
+                                                {/* variation starts */}
+                                                {activeButton === 8 &&
+                                                    <div className="FormDiv mainFormDiv ms-3" style={{ marginBottom: "18px" }}>
+                                                        <form onSubmit={handleSubmit}>
+                                                            {VariationFormValues.map((element, index) => (
+                                                                <div className="row w-100 slider_wrap_sld variation_product" key={index}>
+
+                                                                    <div className="row w-100 pb-2 mt-4">
+                                                                        <div className="first-name col-md-4">
+                                                                            <label className='form_label'>Variation SKU</label>
+                                                                            <input type=" text" name="first_name" className={'form-control' + (element.errvariation && !element.variation_sku ? ' inputerrors' : '')} onChange={(e) => getvariationSKU(e, index)} value={element.variation_sku} /></div>
+
+                                                                        <div className="first-name col-md-4">
+                                                                            <label className='form_label'>Variation Title</label>
+                                                                            <input type=" text" name="first_name" className={'form-control' + (element.errvariation && !element.variation_title ? ' inputerrors' : '')} onChange={(e) => getvariationTitle(e, index)} value={element.variation_title} /></div>
+                                                                        <div className="first-name col-md-1 text-center">
+                                                                            <label className='form_label'>Default</label><br />
+                                                                            <input className='' name='variation' type="radio" checked={element.IsDefault === 1} onClick={(e) => getIsDefault(e, index)} />
                                                                         </div>
-                                                                    </>
-                                                                )
-                                                            })}
-                                                        </div >
-                                                    </div>
-                                                </div>
-                                            </div>}
-                                        {/* attributes ends */}
-
-                                        {/* variation starts */}
-                                        {activeButton === 8 &&
-                                            <div className="FormDiv mainFormDiv ms-3" style={{ marginBottom: "18px" }}>
-                                                <form onSubmit={handleSubmit}>
-                                                    {VariationFormValues.map((element, index) => (
-                                                        <div className="row w-100 slider_wrap_sld variation_product" key={index}>
-
-                                                            <div className="row w-100 pb-2 mt-4">
-                                                                <div className="first-name col-md-4">
-                                                                    <label className='form_label'>Variation SKU</label>
-                                                                    <input type=" text" name="first_name" className={'form-control' + (element.errvariation && !element.variation_sku ? ' inputerrors' : '')} onChange={(e) => getvariationSKU(e, index)} value={element.variation_sku} /></div>
-
-                                                                <div className="first-name col-md-4">
-                                                                    <label className='form_label'>Variation Title</label>
-                                                                    <input type=" text" name="first_name" className={'form-control' + (element.errvariation && !element.variation_title ? ' inputerrors' : '')} onChange={(e) => getvariationTitle(e, index)} value={element.variation_title} /></div>
-                                                                <div className="first-name col-md-1 text-center">
-                                                                    <label className='form_label'>Default</label><br />
-                                                                    <input className='' name='variation' type="radio" checked={element.IsDefault === 1} onClick={(e) => getIsDefault(e, index)} />
-                                                                </div>
-                                                                {/* <div className="first-name col-md-4">
+                                                                        {/* <div className="first-name col-md-4">
                                                                     <label className='form_label'>Product SKU</label>
                                                                     <input type=" text" name="first_name" className="form-control" value={element.product_sku} /></div> */}
+                                                                    </div>
+
+                                                                    <div className="row  w-100 pb-2">
+                                                                        <div className="first-name col-md-2">
+                                                                            <label className='form_label'>Price</label>
+                                                                            <input type="number" name="first_name" className={"Firstname form-control input-csize box-size" + (element.errvariation && !element.variation_price ? ' inputerrors' : '')} onChange={(e) => getvariationprice(e, index)} value={element.variation_price} /></div>
+                                                                        <div className="first-name col-md-3"><label className='form_label'>Vendor Price {BaseCurrency.adminLabel}</label>
+                                                                            <input type="number" name="first_name" className={"Firstname form-control input-csize box-size" + (element.errvariation && !element.variation_vendor_price ? ' inputerrors' : '')} onChange={(e) => getVariationvendorprice(e, index)} value={element.variation_vendor_price} />
+                                                                        </div>
+                                                                        <div className="first-name col-md-3"><label className='form_label'>Vendor Base Price</label>
+                                                                            <input type="number" name="first_name" className={"Firstname form-control input-csize box-size" + (element.errvariation && !element.variation_vendor_base_price ? ' inputerrors' : '')} onChange={(e) => getVariationvendorbaseprice(e, index)} value={element.variation_vendor_base_price} />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="row  w-100 pb-2">
+                                                                        <div className="first-name col-md-4">
+                                                                            <label className='form_label'>Variation Status</label>
+                                                                            <select className="ew-inputRole form-control box-size" name="status" onChange={(e) => getvariationstatus(e, index)} value={element.variation_status} >
+                                                                                <option value="1">Active</option>
+                                                                                <option value="0">In-Active</option>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div className="first-name col-md-2">
+                                                                            <label className="form_label"> Variation Image</label>
+                                                                            <div className='wrap_image'>
+                                                                                <label htmlFor={`catImageDesktop${index}`} className="custom-file-upload" style={{ marginTop: "0px" }}>
+                                                                                    Choose File
+                                                                                </label>
+                                                                                <input id={`catImageDesktop${index}`} className={"c-logo form-control ew-inputRole box-size " + (element.errvariation && !element.previewimageurl ? ' inputerrors' : '')} type="file" name="myfile" style={{ display: 'none' }} onChange={(e) => imageSelect(e, index)} />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className='wrap-image_variation col-md-2'>
+                                                                            {element.previewimageurl && (
+                                                                                <img style={{ maxWidth: '100%', paddingTop: '20px' }} src={element.previewimageurl} alt=" " />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    {
+                                                                        element ?
+                                                                            <div className="col-md-3">
+                                                                                <ImCross type="button" className="button remove_variation" onClick={() => removeFormFields(index)} />
+                                                                            </div>
+                                                                            : null
+                                                                    }
+                                                                </div>
+                                                            ))}
+                                                            <div className="col-md-2">
+                                                                <div className='BtnCreate mt-2 mb-2' style={{ width: "73px" }} type="button" onClick={() => addFormFields()}>Add<HiPlus /></div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                }
+                                                {/* variation ends */}
+
+                                                {/* Description starts */}
+                                                {activeButton === 9 &&
+                                                    <div className='row mb-1 pt-2 mt-3 ms-4'>
+                                                        <div className='col-md-6'>
+                                                            <div className="addressline1"><label className="form_label">Short Description</label>
+                                                                <SunEditor
+                                                                    setOptions={{
+                                                                        buttonList: [
+                                                                            // default
+                                                                            ['undo', 'redo',],
+                                                                            ['bold', 'underline', 'italic', 'list'],
+                                                                            ['table', 'link', 'image'],
+                                                                            ['fullScreen', 'showBlocks', 'codeView'],
+                                                                        ],
+                                                                        attributesWhitelist: {
+                                                                            'all': '*',
+                                                                        }
+                                                                    }}
+                                                                    height="100%" onChange={handleproshortDescription}
+                                                                    setContents={shortdescription} />
                                                             </div>
 
-                                                            <div className="row  w-100 pb-2">
-                                                                <div className="first-name col-md-2">
-                                                                    <label className='form_label'>Price</label>
-                                                                    <input type="number" name="first_name" className={"Firstname form-control input-csize box-size" + (element.errvariation && !element.variation_price ? ' inputerrors' : '')} onChange={(e) => getvariationprice(e, index)} value={element.variation_price} /></div>
-                                                                <div className="first-name col-md-3"><label className='form_label'>Vendor Price {BaseCurrency.adminLabel}</label>
-                                                                    <input type="number" name="first_name" className={"Firstname form-control input-csize box-size" + (element.errvariation && !element.variation_vendor_price ? ' inputerrors' : '')} onChange={(e) => getVariationvendorprice(e, index)} value={element.variation_vendor_price} />
-                                                                </div>
-                                                                <div className="first-name col-md-3"><label className='form_label'>Vendor Base Price</label>
-                                                                    <input type="number" name="first_name" className={"Firstname form-control input-csize box-size" + (element.errvariation && !element.variation_vendor_base_price ? ' inputerrors' : '')} onChange={(e) => getVariationvendorbaseprice(e, index)} value={element.variation_vendor_base_price} />
-                                                                </div>
+                                                            <div className="addressline1 mt-1"><label className="form_label">Description</label>
+                                                                <SunEditor
+                                                                    setOptions={{
+                                                                        minHeight: 185,
+                                                                        buttonList: [
+                                                                            // default
+                                                                            ['undo', 'redo',],
+                                                                            ['bold', 'underline', 'italic', 'list'],
+                                                                            ['table', 'link', 'image'],
+                                                                            ['fullScreen', 'codeView'],
+                                                                        ],
+                                                                        attributesWhitelist: {
+                                                                            'all': '*',
+                                                                        }
+                                                                    }}
+                                                                    height="100%" onChange={handleproDescription}
+                                                                    setContents={productdescription}
+                                                                />
                                                             </div>
-                                                            <div className="row  w-100 pb-2">
-                                                                <div className="first-name col-md-4">
-                                                                    <label className='form_label'>Variation Status</label>
-                                                                    <select className="ew-inputRole form-control box-size" name="status" onChange={(e) => getvariationstatus(e, index)} value={element.variation_status} >
-                                                                        <option value="1">Active</option>
-                                                                        <option value="0">In-Active</option>
-                                                                    </select>
-                                                                </div>
-                                                                <div className="first-name col-md-2">
-                                                                    <label className="form_label"> Variation Image</label>
-                                                                    <div className='wrap_image'>
-                                                                        <label htmlFor={`catImageDesktop${index}`} className="custom-file-upload" style={{ marginTop: "0px" }}>
-                                                                            Choose File
-                                                                        </label>
-                                                                        <input id={`catImageDesktop${index}`} className={"c-logo form-control ew-inputRole box-size " + (element.errvariation && !element.previewimageurl ? ' inputerrors' : '')} type="file" name="myfile" style={{ display: 'none' }} onChange={(e) => imageSelect(e, index)} />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className='wrap-image_variation col-md-2'>
-                                                                    {element.previewimageurl && (
-                                                                        <img style={{ maxWidth: '100%', paddingTop: '20px' }} src={element.previewimageurl} alt=" " />
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            {
-                                                                element ?
-                                                                    <div className="col-md-3">
-                                                                        <ImCross type="button" className="button remove_variation" onClick={() => removeFormFields(index)} />
-                                                                    </div>
-                                                                    : null
-                                                            }
                                                         </div>
-                                                    ))}
-                                                    <div className="col-md-2">
-                                                        <div className='BtnCreate mt-2 mb-2' style={{ width: "73px" }} type="button" onClick={() => addFormFields()}>Add<HiPlus /></div>
+
+                                                        <div className='col-md-6'>
+                                                            <div className="addressline1 custmChallan"><label className="form_label"> Challan Short Description</label>
+                                                                <SunEditor
+                                                                    className='form-control'
+                                                                    setOptions={{
+                                                                        buttonList: [
+                                                                            // default
+                                                                            ['undo', 'redo',],
+                                                                            ['bold', 'underline', 'italic', 'list'],
+                                                                            ['table', 'link', 'image'],
+                                                                            ['fullScreen', 'codeView'],
+                                                                        ],
+                                                                        attributesWhitelist: {
+                                                                            'all': '*',
+                                                                        }
+                                                                    }} height="100%" onChange={handleChallanshortDescription}
+                                                                    setContents={challanshortDescription} />
+
+                                                            </div>
+
+                                                            <div className="addressline1 custmChallan mt-1"><label className="form_label"> Challan Description</label>
+                                                                <SunEditor
+                                                                    setOptions={{
+                                                                        minHeight: 185,
+                                                                        buttonList: [
+                                                                            // default
+                                                                            ['undo', 'redo',],
+                                                                            ['bold', 'underline', 'italic', 'list'],
+                                                                            ['table', 'link', 'image'],
+                                                                            ['fullScreen', 'codeView'],
+                                                                        ],
+                                                                        attributesWhitelist: {
+                                                                            'all': '*',
+                                                                        }
+                                                                    }}
+                                                                    height="100%" onChange={handleproChallanDescription}
+                                                                    setContents={ChallanDescription}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </form>
+                                                }
+                                                {/* Description ends */}
+
+                                                {/* related products starts */}
+                                                {(activeButton === 10 && Productcountry) ?
+                                                    <div className="product-form mt-4">
+                                                        <div className=''>
+                                                            {/* <label className="form_label"> Related Products </label> */}
+                                                            <div className="ag-theme-alpine" style={{ height: "102vh" }}>
+                                                                <AgGridReact
+                                                                    columnDefs={productsCol}
+                                                                    rowData={AllProductsCountryWise}
+                                                                    pagination={true}
+                                                                    paginationPageSize='10'
+                                                                // onRowClicked={(e) => handleProductDarshboard(e)}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    : (activeButton === 10 && !Productcountry) ? <div className='stylingproductcat fw-bolder mt-5 pt-3' > Select Country</div> : ''}
+                                                {/* related products ends */}
+
                                             </div>
-                                        }
-                                        {/* variation ends */}
-
-                                        {/* Description starts */}
-                                        {activeButton === 9 &&
-                                            <div className='row mb-1 pt-2 mt-3 ms-4'>
-                                                <div className='col-md-6'>
-                                                    <div className="addressline1"><label className="form_label">Short Description</label>
-                                                        <SunEditor
-                                                            setOptions={{
-                                                                buttonList: [
-                                                                    // default
-                                                                    ['undo', 'redo',],
-                                                                    ['bold', 'underline', 'italic', 'list'],
-                                                                    ['table', 'link', 'image'],
-                                                                    ['fullScreen', 'showBlocks', 'codeView'],
-                                                                ],
-                                                                attributesWhitelist: {
-                                                                    'all': '*',
-                                                                }
-                                                            }}
-                                                            height="100%" onChange={handleproshortDescription}
-                                                            setContents={shortdescription} />
-                                                    </div>
-
-                                                    <div className="addressline1 mt-1"><label className="form_label">Description</label>
-                                                        <SunEditor
-                                                            setOptions={{
-                                                                minHeight: 185,
-                                                                buttonList: [
-                                                                    // default
-                                                                    ['undo', 'redo',],
-                                                                    ['bold', 'underline', 'italic', 'list'],
-                                                                    ['table', 'link', 'image'],
-                                                                    ['fullScreen', 'codeView'],
-                                                                ],
-                                                                attributesWhitelist: {
-                                                                    'all': '*',
-                                                                }
-                                                            }}
-                                                            height="100%" onChange={handleproDescription}
-                                                            setContents={productdescription}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className='col-md-6'>
-                                                    <div className="addressline1 custmChallan"><label className="form_label"> Challan Short Description</label>
-                                                        <SunEditor
-                                                            className='form-control'
-                                                            setOptions={{
-                                                                buttonList: [
-                                                                    // default
-                                                                    ['undo', 'redo',],
-                                                                    ['bold', 'underline', 'italic', 'list'],
-                                                                    ['table', 'link', 'image'],
-                                                                    ['fullScreen', 'codeView'],
-                                                                ],
-                                                                attributesWhitelist: {
-                                                                    'all': '*',
-                                                                }
-                                                            }} height="100%" onChange={handleChallanshortDescription}
-                                                            setContents={challanshortDescription} />
-
-                                                    </div>
-
-                                                    <div className="addressline1 custmChallan mt-1"><label className="form_label"> Challan Description</label>
-                                                        <SunEditor
-                                                            setOptions={{
-                                                                minHeight: 185,
-                                                                buttonList: [
-                                                                    // default
-                                                                    ['undo', 'redo',],
-                                                                    ['bold', 'underline', 'italic', 'list'],
-                                                                    ['table', 'link', 'image'],
-                                                                    ['fullScreen', 'codeView'],
-                                                                ],
-                                                                attributesWhitelist: {
-                                                                    'all': '*',
-                                                                }
-                                                            }}
-                                                            height="100%" onChange={handleproChallanDescription}
-                                                            setContents={ChallanDescription}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                        {/* Description ends */}
-
-                                        {/* related products starts */}
-                                        {(activeButton === 10 && Productcountry) ?
-                                            <div className="product-form mt-4">
-                                                <div className=''>
-                                                    {/* <label className="form_label"> Related Products </label> */}
-                                                    <div className="ag-theme-alpine" style={{ height: "102vh" }}>
-                                                        <AgGridReact
-                                                            columnDefs={productsCol}
-                                                            rowData={AllProductsCountryWise}
-                                                            pagination={true}
-                                                            paginationPageSize='10'
-                                                        // onRowClicked={(e) => handleProductDarshboard(e)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            : (activeButton === 10 && !Productcountry) ? <div className='stylingproductcat fw-bolder mt-5 pt-3' > Select Country</div> : ''}
-                                        {/* related products ends */}
-
-                                    </div>
+                                </div>
                                 </div>
                             </div>
-                        </div>
-                    </div >
+                        </div >
 
-                </div>
-            </div >
-        </>
-    )
+                    </div>
+                </div >
+            </>
+            )
 }
